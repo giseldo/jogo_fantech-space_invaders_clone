@@ -1,6 +1,14 @@
-import { createPlayer, updatePlayer } from "./player.js"; // Importa funções do módulo player.js
-import { bullets, createBullets, updateBullets } from "./bullets.js"; // Importa funções do módulo bullets.js
-import { enemies, createEnemies, updateEnemies } from "./enemies.js"; // Importa funções do módulo enemies.js
+import { player, createPlayer, updatePlayer } 
+    from "./player.js"; // Importa funções do módulo player.js
+//Importando o Bullets.js para criar os tiros
+//import { bullets, createBullets, updateBullets } 
+//  from "./bullets.js"; // Importa funções do módulo bullets.js
+
+import { bullets, enemyBullets, createBullets, updateBullets, 
+    shootBullet, enemyShoot } from "./bullets.js";
+
+    import { enemies, createEnemies, updateEnemies } 
+    from "./enemies.js"; // Importa funções do módulo enemies.js
 
 const config = { // Configurações do jogo
     type: Phaser.AUTO, // Usa WebGL se disponível, senão usa Canvas
@@ -18,9 +26,12 @@ const config = { // Configurações do jogo
 const game = new Phaser.Game(config); // Cria o jogo
 
 function preload() { // Carrega os recursos do jogo
-    this.load.image('player', 'assets/player.png'); // Carrega a imagem do jogador
-    this.load.image('bullet', 'assets/bullet.png'); // Carrega a imagem do tiro
-    this.load.image('enemy', 'assets/enemy.png'); // Carrega a imagem do inimigo
+    this.load.image('player', 'assets/player.png'); 
+    // Carrega a imagem do jogador
+    this.load.image('bullet', 'assets/bullet.png'); 
+    // Carrega a imagem do tiro
+    this.load.image('enemy', 'assets/enemy.png'); 
+    // Carrega a imagem do inimigo
 }
 
 function create() {
@@ -39,10 +50,26 @@ function create() {
         null,
         this
     );
+    this.physics.add.overlap(
+        enemyBullets,
+        player,
+        () => {
+            player.disableBody(true, true); // em vez de .destroy()
+            this.add.text(400, 300, 'GAME OVER', {
+                fontSize: '48px',
+                fill: '#f00'
+            }).setOrigin(0.5);
+            this.scene.pause();
+        },
+        null,
+        this
+    );
 }
 
 function update(time) { // Atualiza o jogo
     updatePlayer(time); // Atualiza o jogador
     updateBullets(); // Atualiza os tiros
     updateEnemies(this, time); // Atualiza os inimigos
+    enemyShoot(this, time, enemies);
+
 }
