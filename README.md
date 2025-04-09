@@ -13,7 +13,11 @@ A proposta é criar um **modo multiplayer**, permitindo que jogadores joguem jun
 Atualmente, o projeto está na **Fase 1 - Protótipo Singleplayer**, contendo:
 ✅ Movimentação da nave.  
 ✅ Disparo de projéteis.  
-🔲 Implementação de inimigos e colisões (em andamento).  
+✅ Inimigos com movimentação em grupo.  
+✅ Colisões entre tiros e inimigos.  
+✅ Tiros inimigos aleatórios.  
+✅ Sistema básico de Game Over (com pausa da cena).  
+🔲 Sistema de vidas e pontuação (em desenvolvimento).  
 
 ---
 
@@ -40,10 +44,8 @@ space_invaders-clone/
 │── js/
 │   ├── game.js        # Configuração do jogo Phaser
 │   ├── player.js      # Lógica do jogador (movimentação e tiros)
-│   ├── enemies.js     # Lógica dos inimigos (em breve)
-│   ├── bullets.js     # Gerenciamento de tiros
-│   ├── collisions.js  # Detecção de colisões (em breve)
-│   ├── utils.js       # Funções auxiliares (como redimensionamento)
+│   ├── enemies.js     # Lógica dos inimigos (movimentação em grupo)
+│   ├── bullets.js     # Gerenciamento de tiros (jogador e inimigos)
 │── assets/            # Pasta de imagens e sons
 │── README.md          # Documentação do projeto
 ```
@@ -60,7 +62,7 @@ cd space_invaders-clone
 ### 2️⃣ Abra o projeto com um servidor local  
 Se estiver usando **VS Code**, instale a extensão **Live Server** e clique com o botão direito no `index.html`, selecionando **"Open with Live Server"**.
 
-Se preferir rodar com **Python**, use:  
+Ou rode com **Python**:  
 ```sh
 python -m http.server 8000
 ```
@@ -69,10 +71,10 @@ Depois, abra o navegador e acesse `http://localhost:8000`.
 ---
 
 ## 🚀 Próximos Passos
-🔲 Criar os inimigos e sua movimentação.  
-🔲 Implementar colisões entre tiros e inimigos.  
-🔲 Adicionar sistema de pontuação.  
-🔲 Criar versão **multiplayer** usando WebSockets.  
+🔲 Sistema de vidas e exibição de HUD.  
+🔲 Sistema de pontuação e fases.  
+🔲 Reinício automático ou botão após Game Over.  
+🔲 Versão **multiplayer** com WebSockets e backend em Python.  
 
 ---
 
