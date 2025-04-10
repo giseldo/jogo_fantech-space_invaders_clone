@@ -94,6 +94,9 @@
             0xffa500,    // Laranja
             0x800080,    // Roxo
         ];
+        let soundEnabled = true; // Nova variável para controlar o estado do som
+        let soundToggleText; // Variável para exibir o status do som
+        let mKey; // Nova variável para a tecla M (mute)
     
         function preload() {
             this.load.image('player', 'assets/player.png');
@@ -164,14 +167,22 @@
             pKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P); // Adiciona a tecla P
             
             // Texto de pausa
-            pauseText = this.add.text(400, 300, 'PAUSADO', { fontSize: '64px', fill: '#fff' });
+            pauseText = this.add.text(400, 300, 'PAUSED', { fontSize: '64px', fill: '#fff' });
             pauseText.setOrigin(0.5);
             pauseText.setVisible(false);
 
             // Adicionar texto de instruções na parte inferior da tela
-            instructionsText = this.add.text(400, 580, 'SPAÇE BAR shoot | R reboot | P pause', 
+            instructionsText = this.add.text(400, 580, 'SPACE BAR shoot | R Reboot | P Pause | S Sound on/off', 
                 { fontSize: '16px', fill: '#fff' });
             instructionsText.setOrigin(0.5, 0.5); // Centraliza o texto
+            
+            // Adiciona a tecla M para controlar o som
+            mKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+            
+            // Texto para indicar o status do som (inicialmente invisível porque o som está ativado)
+            soundToggleText = this.add.text(750, 580, 'Sound: OFF', { fontSize: '16px', fill: '#fff' });
+            soundToggleText.setOrigin(1, 0.5);
+            soundToggleText.setVisible(!soundEnabled);
             
             // Collisions
             this.physics.add.overlap(bullets, aliens, alienHit, null, this);
@@ -189,6 +200,12 @@
             // Verifica se a tecla P foi pressionada para pausar/despausar o jogo
             if (Phaser.Input.Keyboard.JustDown(pKey)) {
                 togglePause(this);
+                return;
+            }
+            
+            // Verifica se a tecla M foi pressionada para ativar/desativar o som
+            if (Phaser.Input.Keyboard.JustDown(mKey)) {
+                toggleSound(this);
                 return;
             }
             
@@ -302,8 +319,10 @@
             bullet.destroy();
             alien.destroy();
             
-            // Reproduz o som de explosão
-            explosionSound.play();
+            // Reproduz o som de explosão apenas se o som estiver ativado
+            if (soundEnabled) {
+                explosionSound.play();
+            }
     
             score += 10;
             scoreText.setText('Score: ' + score);
@@ -343,8 +362,10 @@
             gameOverText.setVisible(true);
             scene.physics.pause();
             
-            // Reproduz o som de game over
-            gameOverSound.play();
+            // Reproduz o som de game over apenas se o som estiver ativado
+            if (soundEnabled) {
+                gameOverSound.play();
+            }
             
             // Reiniciar jogo após 3 segundos
             scene.time.delayedCall(3000, () => {
@@ -362,6 +383,29 @@
             } else {
                 scene.physics.resume();
                 pauseText.setVisible(false);
+            }
+        }
+        
+        // Nova função para ativar/desativar o som
+        function toggleSound(scene) {
+            soundEnabled = !soundEnabled;
+            
+            // Atualiza o texto de status do som
+            soundToggleText.setVisible(!soundEnabled);
+            
+            // Controla o volume de todos os sons com base no estado
+            const volume = soundEnabled ? 0.5 : 0;
+            
+            if (backgroundMusic) {
+                backgroundMusic.setVolume(volume);
+            }
+            
+            if (explosionSound) {
+                explosionSound.setVolume(soundEnabled ? 1 : 0);
+            }
+            
+            if (gameOverSound) {
+                gameOverSound.setVolume(soundEnabled ? 1 : 0);
             }
         }
         
@@ -385,7 +429,10 @@
             // Reinicia a música de fundo
             if (backgroundMusic) {
                 backgroundMusic.stop();
-                backgroundMusic.play();
+                // Toca apenas se o som estiver ativado
+                if (soundEnabled) {
+                    backgroundMusic.play();
+                }
             }
             
             createAliens(scene);
