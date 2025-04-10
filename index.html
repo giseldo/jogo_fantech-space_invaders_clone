@@ -64,12 +64,15 @@
         let alienDirection = 1; // Variável para controlar direção dos aliens
         let gameActive = true; // Variável para controlar estado do jogo
         let background; // Variável para o background
+        let alienBullets; // Grupo para os tiros dos aliens
+        let alienShootTimer; // Temporizador para os tiros dos aliens
     
         function preload() {
             this.load.image('player', 'assets/player.png');
             this.load.image('alien', 'assets/enemy.png');
             this.load.image('bullet', 'assets/bullet.png');
             this.load.image('background', 'assets/background.png'); // Carregando a imagem de background
+            this.load.image('alienBullet', 'assets/bullet.png'); // Usar mesma imagem ou criar uma nova para os tiros dos aliens
         }
     
         function create() {
@@ -87,6 +90,9 @@
     
             // Bullets
             bullets = this.physics.add.group();
+            
+            // Bullets dos aliens
+            alienBullets = this.physics.add.group();
     
             // Score
             scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
@@ -103,6 +109,15 @@
             // Collisions
             this.physics.add.overlap(bullets, aliens, alienHit, null, this);
             this.physics.add.overlap(player, aliens, playerHit, null, this);
+            this.physics.add.overlap(player, alienBullets, playerHit, null, this);
+            
+            // Configurar temporizador para aliens atirarem
+            alienShootTimer = this.time.addEvent({
+                delay: 1000,
+                callback: alienShoot,
+                callbackScope: this,
+                loop: true
+            });
         }
     
         function update() {
@@ -162,6 +177,13 @@
                     bullet.destroy();
                 }
             });
+            
+            // Remove alien bullets when they go out of bounds
+            alienBullets.getChildren().forEach(bullet => {
+                if (bullet.y > 600) {
+                    bullet.destroy();
+                }
+            });
         }
     
         function createAliens(scene) {
@@ -173,7 +195,7 @@
             let speed = 50 + Math.floor(score / 100) * 10;
             
             for (let row = 0; row < 4; row++) {
-                for (let col = 0; col < 10; col++) {
+                for (let col = 0; col < 10; {
                     let alien = aliens.create(col * 70 + 50, row * 50 + 50, 'alien').setScale(0.5);
                     alien.setOrigin(0.5);
                     alien.setVelocityX(speed * alienDirection);
@@ -201,11 +223,30 @@
         function playerHit(player, alien) {
             gameOver(this);
         }
+        
+        function alienShoot(scene) {
+            if (!gameActive || aliens.countActive() === 0) return;
+            
+            // Escolhe um alien aleatório para atirar
+            const alienArray = aliens.getChildren();
+            const randomAlien = Phaser.Utils.Array.GetRandom(alienArray);
+            
+            if (randomAlien) {
+                let bullet = alienBullets.create(randomAlien.x, randomAlien.y + 30, 'alienBullet').setScale(0.5);
+                bullet.setTint(0xff0000); // Opcional: muda a cor do tiro para vermelho para diferenciar
+                bullet.setVelocityY(200);
+            }
+        }
     
         function gameOver(scene) {
             gameActive = false;
             gameOverText.setVisible(true);
             scene.physics.pause();
+            
+            // Parar o temporizador de tiros dos aliens
+            if (alienShootTimer) {
+                alienShootTimer.remove();
+            }
             
             // Reiniciar jogo após 3 segundos
             scene.time.delayedCall(3000, () => {
@@ -215,10 +256,19 @@
                 scoreText.setText('Score: 0');
                 aliens.clear(true, true);
                 bullets.clear(true, true);
+                alienBullets.clear(true, true);
                 player.setPosition(400, 550);
                 alienDirection = 1;
                 createAliens(scene);
                 scene.physics.resume();
+                
+                // Reiniciar temporizador dos tiros dos aliens
+                alienShootTimer = scene.time.addEvent({
+                    delay: 1000,
+                    callback: alienShoot,
+                    callbackScope: scene,
+                    loop: true
+                });
             });
         }
     </script>
