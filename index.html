@@ -79,6 +79,10 @@
         let alienSpeed = 50; // Nova variável global para controlar a velocidade dos aliens
         let currentLevel = 1; // Nova variável para controlar a fase atual
         let levelText; // Variável para exibir a fase atual
+        // Variáveis para os sons
+        let explosionSound;
+        let gameOverSound;
+        let backgroundMusic; // Nova variável para a música de fundo
         // Nova variável para armazenar as cores dos aliens por fase
         let alienColors = [
             0xffffff,    // Branco (padrão)
@@ -99,6 +103,11 @@
             this.load.image('bullet', 'assets/bullet.png');
             this.load.image('alienBullet', 'assets/bullet.png'); // Carregando a imagem para o tiro do alien
             this.load.image('background', 'assets/background.png'); // Carregando a imagem de background
+            
+            // Carregando os sons
+            this.load.audio('explosion', 'assets/explosion.mp3');
+            this.load.audio('gameover', 'assets/gameover.mp3');
+            this.load.audio('background-music', 'assets/background-music.mp3'); // Carregando a música de fundo
         }
     
         function create() {
@@ -122,12 +131,23 @@
             
             // Alien Bullets - novo grupo para os tiros dos aliens
             alienBullets = this.physics.add.group();
+            
+            // Carregar sons
+            explosionSound = this.sound.add('explosion');
+            gameOverSound = this.sound.add('gameover');
+            
+            // Iniciar a música de fundo
+            backgroundMusic = this.sound.add('background-music', { 
+                volume: 0.5, 
+                loop: false 
+            });
+            backgroundMusic.play();
     
             // Score
             scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '18px', fill: '#fff' });
             
             // Level text - nova adição para mostrar a fase atual
-            levelText = this.add.text(400, 16, 'FASE ' + currentLevel, { fontSize: '18px', fill: '#fff' });
+            levelText = this.add.text(400, 16, 'PLANET ' + currentLevel, { fontSize: '18px', fill: '#fff' });
             levelText.setOrigin(0.5, 0);
             
             // Hi-Score no canto superior direito (movido mais para a esquerda)
@@ -151,7 +171,7 @@
             pauseText.setVisible(false);
 
             // Adicionar texto de instruções na parte inferior da tela
-            instructionsText = this.add.text(400, 580, 'BARRA DE ESPAÇO para atirar | R para reiniciar | P para pausar', 
+            instructionsText = this.add.text(400, 580, 'SPAÇE BAR shoot | R reboot | P pause', 
                 { fontSize: '16px', fill: '#fff' });
             instructionsText.setOrigin(0.5, 0.5); // Centraliza o texto
             
@@ -283,6 +303,9 @@
         function alienHit(bullet, alien) {
             bullet.destroy();
             alien.destroy();
+            
+            // Reproduz o som de explosão
+            explosionSound.play();
     
             score += 10;
             scoreText.setText('Score: ' + score);
@@ -322,6 +345,9 @@
             gameOverText.setVisible(true);
             scene.physics.pause();
             
+            // Reproduz o som de game over
+            gameOverSound.play();
+            
             // Reiniciar jogo após 3 segundos
             scene.time.delayedCall(3000, () => {
                 restartGame(scene);
@@ -356,7 +382,14 @@
             alienDirection = 1;
             alienSpeed = 50; // Reinicia a velocidade dos aliens ao valor inicial
             currentLevel = 1; // Reinicia a fase ao valor inicial
-            levelText.setText('FASE ' + currentLevel); // Atualiza o texto da fase
+            levelText.setText('PLANET ' + currentLevel); // Atualiza o texto da fase
+            
+            // Reinicia a música de fundo
+            if (backgroundMusic) {
+                backgroundMusic.stop();
+                backgroundMusic.play();
+            }
+            
             createAliens(scene);
             scene.physics.resume();
         }
