@@ -6,11 +6,215 @@
     <title>Space Invaders - Clone [Multiplayer]</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    
+        #game-container {
+            width: 800px;
+            height: 600px;
+            margin: 0 auto;
+            border: 1px solid #fff;
+        }
+    </style>
 </head>
 <body>
     <div id="game-container">
     </div>
-    <script type="module" src="js/game.js"></script>
+    <script type="module">
+        // Configuração do Phaser
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            parent: 'game-container',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+    
+        const game = new Phaser.Game(config);
+    
+        let player;
+        let aliens;
+        let bullets;
+        let score = 0;
+        let scoreText;
+        let gameOverText;
+        let cursors;
+        let spaceKey;
+        let alienDirection = 1; // Variável para controlar direção dos aliens
+        let gameActive = true; // Variável para controlar estado do jogo
+    
+        function preload() {
+            this.load.image('player', 'assets/player.png');
+            this.load.image('alien', 'assets/alien.png');
+            this.load.image('bullet', 'assets/bullet.png');
+        }
+    
+        function create() {
+            // Player
+            player = this.physics.add.sprite(400, 550, 'player').setScale(0.5);
+            player.setCollideWorldBounds(true);
+    
+            // Aliens
+            aliens = this.physics.add.group();
+            createAliens(this);
+    
+            // Bullets
+            bullets = this.physics.add.group();
+    
+            // Score
+            scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+    
+            // Game Over Text
+            gameOverText = this.add.text(400, 300, 'Game Over', { fontSize: '64px', fill: '#fff' });
+            gameOverText.setOrigin(0.5);
+            gameOverText.setVisible(false);
+    
+            // Input
+            cursors = this.input.keyboard.createCursorKeys();
+            spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    
+            // Collisions
+            this.physics.add.overlap(bullets, aliens, alienHit, null, this);
+            this.physics.add.overlap(player, aliens, playerHit, null, this);
+        }
+    
+        function update() {
+            if (!gameActive) return;
+            
+            // Player movement
+            player.setVelocityX(0);
+            if (cursors.left.isDown) {
+                player.setVelocityX(-300);
+            } else if (cursors.right.isDown) {
+                player.setVelocityX(300);
+            }
+    
+            // Shooting
+            if (Phaser.Input.Keyboard.JustDown(spaceKey)) {
+                fireBullet(this);
+            }
+    
+            // Alien movement - lógica melhorada
+            let changeDirection = false;
+            let bottomY = 0;
+            
+            aliens.getChildren().forEach(alien => {
+                if (alien.x <= 20 && alienDirection < 0) {
+                    changeDirection = true;
+                }
+                else if (alien.x >= 780 && alienDirection > 0) {
+                    changeDirection = true;
+                }
+                
+                if (alien.y > bottomY) {
+                    bottomY = alien.y;
+                }
+            });
+            
+            if (changeDirection) {
+                alienDirection *= -1;
+                aliens.getChildren().forEach(alien => {
+                    alien.y += 20;
+                    alien.setVelocityX(50 * alienDirection);
+                });
+            }
+            
+            // Game Over Check
+            if (bottomY >= 520 || aliens.countActive() === 0) {
+                if (bottomY >= 520) {
+                    gameOver(this);
+                } else {
+                    // Próximo nível
+                    createAliens(this);
+                }
+            }
+            
+            // Remove bullets when they go out of bounds
+            bullets.getChildren().forEach(bullet => {
+                if (bullet.y < 0) {
+                    bullet.destroy();
+                }
+            });
+        }
+    
+        function createAliens(scene) {
+            // Limpa aliens existentes se for um novo nível
+            if (aliens.countActive() === 0) {
+                aliens.clear(true, true);
+            }
+            
+            let speed = 50 + Math.floor(score / 100) * 10;
+            
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 10; col++) {
+                    let alien = aliens.create(col * 70 + 50, row * 50 + 50, 'alien').setScale(0.5);
+                    alien.setOrigin(0.5);
+                    alien.setVelocityX(speed * alienDirection);
+                }
+            }
+        }
+    
+        function fireBullet(scene) {
+            let bullet = bullets.create(player.x, player.y - 30, 'bullet').setScale(0.5);
+            bullet.setVelocityY(-400);
+        }
+    
+        function alienHit(bullet, alien) {
+            bullet.destroy();
+            alien.destroy();
+    
+            score += 10;
+            scoreText.setText('Score: ' + score);
+    
+            if (aliens.countActive() === 0) {
+                createAliens(this);
+            }
+        }
+    
+        function playerHit(player, alien) {
+            gameOver(this);
+        }
+    
+        function gameOver(scene) {
+            gameActive = false;
+            gameOverText.setVisible(true);
+            scene.physics.pause();
+            
+            // Reiniciar jogo após 3 segundos
+            scene.time.delayedCall(3000, () => {
+                gameActive = true;
+                gameOverText.setVisible(false);
+                score = 0;
+                scoreText.setText('Score: 0');
+                aliens.clear(true, true);
+                bullets.clear(true, true);
+                player.setPosition(400, 550);
+                alienDirection = 1;
+                createAliens(scene);
+                scene.physics.resume();
+            });
+        }
+    </script>
 </body>
 </html>
