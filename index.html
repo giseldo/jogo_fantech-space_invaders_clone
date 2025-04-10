@@ -61,9 +61,15 @@
         let gameOverText;
         let cursors;
         let spaceKey;
+        let rKey; // Nova variável para a tecla R
         let alienDirection = 1; // Variável para controlar direção dos aliens
         let gameActive = true; // Variável para controlar estado do jogo
         let background; // Variável para o background
+        let hiScore = 0; // Variável para armazenar a pontuação máxima
+        let hiScoreText; // Texto para exibir a pontuação máxima
+        let instructionsText; // Variável para texto de instruções
+        let lastFired = 0; // Variável para controlar o tempo entre disparos
+        let fireRate = 200; // Taxa de disparo em milissegundos
     
         function preload() {
             this.load.image('player', 'assets/player.png');
@@ -73,6 +79,9 @@
         }
     
         function create() {
+            // Carregar hi-score do localStorage, se existir
+            hiScore = localStorage.getItem('spaceInvadersHiScore') ? parseInt(localStorage.getItem('spaceInvadersHiScore')) : 0;
+            
             // Background
             background = this.add.image(400, 300, 'background');
             background.setDisplaySize(800, 600); // Ajusta o tamanho para cobrir toda a tela
@@ -84,12 +93,16 @@
             // Aliens
             aliens = this.physics.add.group();
             createAliens(this);
-    
+            
             // Bullets
             bullets = this.physics.add.group();
     
             // Score
-            scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+            scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '18px', fill: '#fff' });
+            
+            // Hi-Score no canto superior direito (movido mais para a esquerda)
+            hiScoreText = this.add.text(650, 16, 'Hi-Score: ' + hiScore, { fontSize: '18px', fill: '#fff' });
+            hiScoreText.setOrigin(0, 0);
     
             // Game Over Text
             gameOverText = this.add.text(400, 300, 'Game Over', { fontSize: '64px', fill: '#fff' });
@@ -99,13 +112,25 @@
             // Input
             cursors = this.input.keyboard.createCursorKeys();
             spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R); // Adiciona a tecla R
     
             // Collisions
             this.physics.add.overlap(bullets, aliens, alienHit, null, this);
             this.physics.add.overlap(player, aliens, playerHit, null, this);
+
+            // Adicionar texto de instruções na parte inferior da tela
+            instructionsText = this.add.text(400, 580, 'BARRA DE ESPAÇO para atirar | R para reiniciar', 
+                { fontSize: '16px', fill: '#fff' });
+            instructionsText.setOrigin(0.5, 0.5); // Centraliza o texto
         }
     
-        function update() {
+        function update(time) {
+            // Verifica se a tecla R foi pressionada para reiniciar o jogo
+            if (Phaser.Input.Keyboard.JustDown(rKey)) {
+                restartGame(this);
+                return;
+            }
+            
             if (!gameActive) return;
             
             // Player movement
@@ -116,9 +141,10 @@
                 player.setVelocityX(300);
             }
     
-            // Shooting
-            if (Phaser.Input.Keyboard.JustDown(spaceKey)) {
+            // Shooting - modificado para permitir tiro contínuo
+            if (spaceKey.isDown && time > lastFired) {
                 fireBullet(this);
+                lastFired = time + fireRate; // Atualiza o tempo do último disparo
             }
     
             // Alien movement - lógica melhorada
@@ -193,6 +219,12 @@
             score += 10;
             scoreText.setText('Score: ' + score);
     
+            if (score > hiScore) {
+                hiScore = score;
+                hiScoreText.setText('Hi-Score: ' + hiScore);
+                localStorage.setItem('spaceInvadersHiScore', hiScore);
+            }
+    
             if (aliens.countActive() === 0) {
                 createAliens(this);
             }
@@ -209,17 +241,22 @@
             
             // Reiniciar jogo após 3 segundos
             scene.time.delayedCall(3000, () => {
-                gameActive = true;
-                gameOverText.setVisible(false);
-                score = 0;
-                scoreText.setText('Score: 0');
-                aliens.clear(true, true);
-                bullets.clear(true, true);
-                player.setPosition(400, 550);
-                alienDirection = 1;
-                createAliens(scene);
-                scene.physics.resume();
+                restartGame(scene);
             });
+        }
+        
+        // Nova função para reiniciar o jogo
+        function restartGame(scene) {
+            gameActive = true;
+            gameOverText.setVisible(false);
+            score = 0;
+            scoreText.setText('Score: 0');
+            aliens.clear(true, true);
+            bullets.clear(true, true);
+            player.setPosition(400, 550);
+            alienDirection = 1;
+            createAliens(scene);
+            scene.physics.resume();
         }
     </script>
 </body>
