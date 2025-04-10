@@ -89,3 +89,44 @@ Este projeto está sendo desenvolvido pelos **alunos da disciplina Fullstack do 
 Caso queira contribuir, sinta-se à vontade para abrir um **Pull Request** ou sugerir melhorias!  
 
 🔗 **Repositório Oficial**: [SPACE INVADER - CLONE [Multiplayer]](https://github.com/K-Galvao-Filho/space_invaders-clone)
+
+---
+
+# Space Invaders Clone - Multiplayer
+
+Um clone do clássico jogo Space Invaders desenvolvido com Phaser 3.
+
+## Sobre o Jogo
+
+Este projeto é um clone simples do Space Invaders com a possibilidade de expansão para multiplayer. O jogo foi desenvolvido utilizando a biblioteca Phaser 3 para jogos HTML5.
+
+## Como Jogar
+
+- Use as setas **← →** para mover a nave
+- Pressione **espaço** para atirar
+- Destrua todos os aliens antes que eles cheguem ao fundo da tela
+
+## Tecnologias Utilizadas
+
+- HTML5
+- JavaScript
+- [Phaser 3](https://phaser.io/)
+
+## Como Executar Localmente
+
+1. Clone este repositório
+2. Abra o arquivo `index.html` em um servidor web local
+   - Você pode usar o Live Server do VS Code ou qualquer outro servidor HTTP simples
+
+## GitHub Pages
+
+Este jogo está disponível online através do GitHub Pages: [Jogar Space Invaders](https://seuusername.github.io/jogo_fantech-space_invaders_clone/)
+
+## Próximas Melhorias
+
+- Implementar modo multiplayer
+- Adicionar efeitos sonoros
+- Adicionar diferentes tipos de aliens
+- Implementar sistema de vidas
+- Adicionar power-ups
+```
