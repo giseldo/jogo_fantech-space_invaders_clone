@@ -86,7 +86,6 @@
         // Nova variável para armazenar as cores dos aliens por fase
         let alienColors = [
             0xffffff,    // Branco (padrão)
-            0x00ff00,    // Verde
             0xff00ff,    // Rosa
             0xffff00,    // Amarelo
             0x00ffff,    // Ciano
@@ -94,7 +93,6 @@
             0x0000ff,    // Azul
             0xffa500,    // Laranja
             0x800080,    // Roxo
-            0x008000     // Verde escuro
         ];
     
         function preload() {
@@ -274,7 +272,7 @@
                 if (score > 0) {
                     alienSpeed += 50;
                     currentLevel++; // Incrementa a fase atual
-                    levelText.setText('FASE ' + currentLevel); // Atualiza o texto da fase
+                    levelText.setText('PLANET ' + currentLevel); // Atualiza o texto da fase
                 }
             }
             
