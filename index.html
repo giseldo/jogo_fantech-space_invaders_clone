@@ -56,25 +56,32 @@
         let player;
         let aliens;
         let bullets;
+        let alienBullets; // Nova variável para os tiros dos aliens
         let score = 0;
         let scoreText;
         let gameOverText;
         let cursors;
         let spaceKey;
         let rKey; // Nova variável para a tecla R
+        let pKey; // Nova variável para a tecla P
         let alienDirection = 1; // Variável para controlar direção dos aliens
         let gameActive = true; // Variável para controlar estado do jogo
+        let gamePaused = false; // Variável para controlar o estado de pausa
         let background; // Variável para o background
         let hiScore = 0; // Variável para armazenar a pontuação máxima
         let hiScoreText; // Texto para exibir a pontuação máxima
         let instructionsText; // Variável para texto de instruções
+        let pauseText; // Variável para o texto de pausa
         let lastFired = 0; // Variável para controlar o tempo entre disparos
         let fireRate = 200; // Taxa de disparo em milissegundos
+        let lastAlienFired = 0; // Controle de tempo para o tiro dos aliens
+        let alienFireRate = 1000; // Taxa de disparo dos aliens (em ms)
     
         function preload() {
             this.load.image('player', 'assets/player.png');
             this.load.image('alien', 'assets/enemy.png');
             this.load.image('bullet', 'assets/bullet.png');
+            this.load.image('alienBullet', 'assets/bullet.png'); // Carregando a imagem para o tiro do alien
             this.load.image('background', 'assets/background.png'); // Carregando a imagem de background
         }
     
@@ -96,6 +103,9 @@
             
             // Bullets
             bullets = this.physics.add.group();
+            
+            // Alien Bullets - novo grupo para os tiros dos aliens
+            alienBullets = this.physics.add.group();
     
             // Score
             scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '18px', fill: '#fff' });
@@ -113,15 +123,22 @@
             cursors = this.input.keyboard.createCursorKeys();
             spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
             rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R); // Adiciona a tecla R
-    
+            pKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P); // Adiciona a tecla P
+            
+            // Texto de pausa
+            pauseText = this.add.text(400, 300, 'PAUSADO', { fontSize: '64px', fill: '#fff' });
+            pauseText.setOrigin(0.5);
+            pauseText.setVisible(false);
+
+            // Adicionar texto de instruções na parte inferior da tela
+            instructionsText = this.add.text(400, 580, 'BARRA DE ESPAÇO para atirar | R para reiniciar | P para pausar', 
+                { fontSize: '16px', fill: '#fff' });
+            instructionsText.setOrigin(0.5, 0.5); // Centraliza o texto
+            
             // Collisions
             this.physics.add.overlap(bullets, aliens, alienHit, null, this);
             this.physics.add.overlap(player, aliens, playerHit, null, this);
-
-            // Adicionar texto de instruções na parte inferior da tela
-            instructionsText = this.add.text(400, 580, 'BARRA DE ESPAÇO para atirar | R para reiniciar', 
-                { fontSize: '16px', fill: '#fff' });
-            instructionsText.setOrigin(0.5, 0.5); // Centraliza o texto
+            this.physics.add.overlap(player, alienBullets, playerHit, null, this); // Nova colisão: tiros aliens vs jogador
         }
     
         function update(time) {
@@ -131,7 +148,13 @@
                 return;
             }
             
-            if (!gameActive) return;
+            // Verifica se a tecla P foi pressionada para pausar/despausar o jogo
+            if (Phaser.Input.Keyboard.JustDown(pKey)) {
+                togglePause(this);
+                return;
+            }
+            
+            if (!gameActive || gamePaused) return;
             
             // Player movement
             player.setVelocityX(0);
@@ -182,9 +205,22 @@
                 }
             }
             
+            // Alien shooting logic - fazer os aliens atirarem periodicamente
+            if (time > lastAlienFired && aliens.countActive() > 0) {
+                alienShoot(this, time);
+                lastAlienFired = time + alienFireRate;
+            }
+            
             // Remove bullets when they go out of bounds
             bullets.getChildren().forEach(bullet => {
                 if (bullet.y < 0) {
+                    bullet.destroy();
+                }
+            });
+            
+            // Remove alien bullets when they go out of bounds
+            alienBullets.getChildren().forEach(bullet => {
+                if (bullet.y > 600) {
                     bullet.destroy();
                 }
             });
@@ -230,7 +266,22 @@
             }
         }
     
-        function playerHit(player, alien) {
+        // Nova função para fazer os aliens atirarem
+        function alienShoot(scene, time) {
+            // Seleciona um alien aleatório para atirar
+            let activeAliens = aliens.getChildren().filter(alien => alien.active);
+            
+            if (activeAliens.length > 0) {
+                let shooter = Phaser.Utils.Array.GetRandom(activeAliens);
+                
+                // Cria o tiro do alien
+                let bullet = alienBullets.create(shooter.x, shooter.y + 30, 'alienBullet').setScale(0.5);
+                bullet.setTint(0xff0000); // Torna o tiro inimigo vermelho para diferenciar
+                bullet.setVelocityY(200); // Velocidade do tiro (mais lenta que a do jogador)
+            }
+        }
+    
+        function playerHit(player, object) {
             gameOver(this);
         }
     
@@ -245,14 +296,30 @@
             });
         }
         
+        // Nova função para pausar/despausar o jogo
+        function togglePause(scene) {
+            gamePaused = !gamePaused;
+            
+            if (gamePaused) {
+                scene.physics.pause();
+                pauseText.setVisible(true);
+            } else {
+                scene.physics.resume();
+                pauseText.setVisible(false);
+            }
+        }
+        
         // Nova função para reiniciar o jogo
         function restartGame(scene) {
             gameActive = true;
+            gamePaused = false; // Certifica que o jogo não está pausado ao reiniciar
             gameOverText.setVisible(false);
+            pauseText.setVisible(false); // Esconde o texto de pausa ao reiniciar
             score = 0;
             scoreText.setText('Score: 0');
             aliens.clear(true, true);
             bullets.clear(true, true);
+            alienBullets.clear(true, true); // Limpa os tiros dos aliens
             player.setPosition(400, 550);
             alienDirection = 1;
             createAliens(scene);
