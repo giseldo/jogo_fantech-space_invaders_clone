@@ -211,7 +211,7 @@
                 alienDirection *= -1;
                 aliens.getChildren().forEach(alien => {
                     alien.y += 20;
-                    alien.setVelocityX(50 * alienDirection);
+                    alien.setVelocityX(alienSpeed * alienDirection);
                 });
             }
             
@@ -252,7 +252,7 @@
                 aliens.clear(true, true);
                 // Aumenta a velocidade apenas quando passa de nível
                 if (score > 0) {
-                    alienSpeed += 10;
+                    alienSpeed += 50;
                     currentLevel++; // Incrementa a fase atual
                     levelText.setText('FASE ' + currentLevel); // Atualiza o texto da fase
                 }
@@ -267,6 +267,7 @@
                 for (let col = 0; col < 10; col++) {
                     let alien = aliens.create(col * 70 + 50, row * 50 + 50, 'alien').setScale(0.5);
                     alien.setOrigin(0.5);
+                    // Aplica a velocidade atual multiplicada pela direção
                     alien.setVelocityX(alienSpeed * alienDirection);
                     // Aplica a cor correspondente à fase atual
                     alien.setTint(alienColor);
